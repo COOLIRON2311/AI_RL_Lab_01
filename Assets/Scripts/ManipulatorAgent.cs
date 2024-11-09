@@ -16,8 +16,10 @@ public class ManipulatorAgent : Agent
     public float targetCenterOffset = 0;
     public bool drawTargetGizmos = false;
     private JointController[] joints;
+    private float DistanceToTarget;
     public override void Initialize()
     {
+        DistanceToTarget = (head.transform.position - target.transform.position).magnitude;
         joints = GetComponentsInChildren<JointController>();
     }
 
@@ -34,25 +36,45 @@ public class ManipulatorAgent : Agent
         for (var i = 0; i < joints.Length; i++)
             joints[i].Rotate(actionBuffers.ContinuousActions[i] * 5f);
         var newDist = (head.transform.position - target.transform.position).magnitude;
+        if (newDist > DistanceToTarget)
+        {
+            DistanceToTarget = newDist;
+            SetReward(-10);
+        }
         if (newDist < 0.4f)
+        {
+            SetReward(100);
             EndEpisode();
+        }
+        else
+        {
+            SetReward(-1);
+        }
     }
     public override void CollectObservations(VectorSensor sensor)
     {
+        foreach (var j in joints)
+        {
+            sensor.AddObservation(j.gameObject.transform.localPosition);
+            sensor.AddObservation(j.gameObject.transform.localRotation);
+        }
+        sensor.AddObservation(head.transform.localPosition);
+        sensor.AddObservation(head.transform.localPosition);
+        sensor.AddObservation(target.transform.localPosition);
     }
     public override void OnEpisodeBegin()
     {
-        target.transform.position = randomTargetPosititon();
+        target.transform.position = randomTargetPosition();
     }
 
-    private Vector3 randomTargetPosititon()
+    private Vector3 randomTargetPosition()
     {
         var point = Random.insideUnitSphere;
         point.Scale(targetSpawnScale);
         point += targetSpawnCenter;
         var vec2 = new Vector2(point.x, point.z);
         if  (vec2.magnitude < targetCenterOffset) {
-            return randomTargetPosititon();
+            return randomTargetPosition();
         }
         return transform.position + point;
     }
@@ -62,7 +84,7 @@ public class ManipulatorAgent : Agent
         Gizmos.color = new Color(1, 0, 0, 0.75F);
         for (var i = 0; i < 100; i++)
         {
-            Gizmos.DrawWireSphere(randomTargetPosititon(), 0.1f);
+            Gizmos.DrawWireSphere(randomTargetPosition(), 0.1f);
         }
     }
 }
