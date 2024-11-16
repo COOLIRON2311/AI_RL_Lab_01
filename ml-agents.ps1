@@ -1,1 +1,1 @@
-mlagents-learn.exe .\MLConfigs\Manipulator.yaml --run-id=ManipulatorRun
+mlagents-learn.exe .\MLConfigs\Manipulator.yaml --run-id=ManipulatorRun $args
