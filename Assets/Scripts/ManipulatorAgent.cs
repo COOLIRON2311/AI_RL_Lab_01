@@ -16,10 +16,10 @@ public class ManipulatorAgent : Agent
     public float targetCenterOffset = 0;
     public bool drawTargetGizmos = false;
     private JointController[] joints;
-    private float DistanceToTarget;
+    // private float DistanceToTarget;
     public override void Initialize()
     {
-        DistanceToTarget = (head.transform.position - target.transform.position).magnitude;
+        // DistanceToTarget = (head.transform.position - target.transform.position).magnitude;
         joints = GetComponentsInChildren<JointController>();
     }
 
@@ -36,20 +36,20 @@ public class ManipulatorAgent : Agent
         for (var i = 0; i < joints.Length; i++)
             joints[i].Rotate(actionBuffers.ContinuousActions[i] * 5f);
         var newDist = (head.transform.position - target.transform.position).magnitude;
-        if (newDist > DistanceToTarget)
-        {
-            DistanceToTarget = newDist;
-            SetReward(-10);
-        }
+        // if (newDist > DistanceToTarget)
+        // {
+        //     DistanceToTarget = newDist;
+        //     SetReward(-1);
+        // }
         if (newDist < 0.4f)
         {
-            SetReward(100);
+            // SetReward(MaxStep - StepCount);
             EndEpisode();
         }
-        else
-        {
-            SetReward(-1);
-        }
+        // else
+        //     SetReward(-StepCount / (float)MaxStep);
+        SetReward(-newDist);
+
     }
     public override void CollectObservations(VectorSensor sensor)
     {
@@ -64,17 +64,18 @@ public class ManipulatorAgent : Agent
     }
     public override void OnEpisodeBegin()
     {
-        target.transform.position = randomTargetPosition();
+        target.transform.position = RandomTargetPosition();
+        // DistanceToTarget = (head.transform.position - target.transform.position).magnitude;
     }
 
-    private Vector3 randomTargetPosition()
+    private Vector3 RandomTargetPosition()
     {
         var point = Random.insideUnitSphere;
         point.Scale(targetSpawnScale);
         point += targetSpawnCenter;
         var vec2 = new Vector2(point.x, point.z);
         if  (vec2.magnitude < targetCenterOffset) {
-            return randomTargetPosition();
+            return RandomTargetPosition();
         }
         return transform.position + point;
     }
@@ -84,7 +85,7 @@ public class ManipulatorAgent : Agent
         Gizmos.color = new Color(1, 0, 0, 0.75F);
         for (var i = 0; i < 100; i++)
         {
-            Gizmos.DrawWireSphere(randomTargetPosition(), 0.1f);
+            Gizmos.DrawWireSphere(RandomTargetPosition(), 0.1f);
         }
     }
 }
